@@ -5,3 +5,6 @@ dist
 .env.local
 .env.*.local
 *.log
+
+# Netlify CLI local state
+.netlify
