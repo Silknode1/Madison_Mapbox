@@ -1484,3 +1484,638 @@ button {
 .style-ctrl .style-menu__option {
   text-align: left;
 }
+
+/* =====================================================================================
+   Apple-like polish layer (Nov 3)
+   iOS semantics: system fills + separators, translucent materials, system blue for the
+   one primary action, 8-pt spacing, 44-pt targets, sheet motion on iOS's spring-like curve.
+   Typography stays Instrument Sans (body) + Fraunces (wordmark only).
+   ===================================================================================== */
+
+:root {
+  --ink: #1c1c1e;
+  --ink-soft: rgba(60, 60, 67, 0.64);
+  --paper: #ffffff;
+  --surface: rgba(250, 250, 252, 0.8);
+  --line: rgba(60, 60, 67, 0.14);
+  --hover: rgba(118, 118, 128, 0.1);
+  --fill: rgba(118, 118, 128, 0.12);
+  --fill-strong: rgba(118, 118, 128, 0.2);
+  --blue: #007aff;
+  --material: saturate(180%) blur(24px);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 10px 32px rgba(0, 0, 0, 0.14);
+  --shadow-sheet: 0 -1px 0 rgba(0, 0, 0, 0.04), 0 -12px 40px rgba(0, 0, 0, 0.18);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius: 20px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f2f2f7;
+    --ink-soft: rgba(235, 235, 245, 0.62);
+    --paper: #1c1c1e;
+    --surface: rgba(28, 28, 30, 0.78);
+    --line: rgba(84, 84, 88, 0.55);
+    --hover: rgba(118, 118, 128, 0.2);
+    --fill: rgba(118, 118, 128, 0.24);
+    --fill-strong: rgba(118, 118, 128, 0.36);
+    --blue: #0a84ff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 36px rgba(0, 0, 0, 0.5);
+    --shadow-sheet: 0 -12px 40px rgba(0, 0, 0, 0.55);
+  }
+}
+
+body {
+  font-feature-settings: 'ss01', 'cv11';
+  letter-spacing: -0.005em;
+}
+
+/* ---------- Panel: one translucent card ------------------------------------------------ */
+
+.panel,
+.legend,
+.drawer {
+  background: var(--surface);
+  -webkit-backdrop-filter: var(--material);
+  backdrop-filter: var(--material);
+  border: 0.5px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.panel {
+  border-radius: var(--radius);
+  transition:
+    opacity 0.25s var(--ease-out),
+    transform 0.35s var(--ease-sheet);
+}
+
+.panel__title h1 {
+  letter-spacing: -0.01em;
+}
+
+.panel__title p {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.badge {
+  font-size: 12px;
+  background: var(--fill);
+  border: 0;
+}
+
+/* Search field: iOS filled style. */
+.search__input {
+  min-height: 44px;
+  font-size: 16px;
+  background: var(--fill);
+  border: 0;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.search__input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 35%, transparent);
+}
+
+.results {
+  border: 0.5px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.hype-bar__select {
+  min-height: 34px;
+  background-color: var(--fill);
+  border: 0;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+.link-btn {
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* Chips: quiet fills; the selected ones pick up a tint of their category color. */
+.chip {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  border: 0.5px solid transparent;
+  border-radius: 999px;
+  box-shadow: none;
+  transition: background-color 0.15s ease, transform 0.12s ease;
+}
+
+.chip[aria-pressed='true'] {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--c) 15%, transparent);
+  border-color: color-mix(in srgb, var(--c) 40%, transparent);
+}
+
+.chip[aria-pressed='false'] {
+  color: var(--ink-soft);
+  background: var(--fill);
+}
+
+.chip:active {
+  transform: scale(0.96);
+}
+
+.chip__count {
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--fill);
+}
+
+/* ---------- Map controls: material buttons -------------------------------------------- */
+
+.mapboxgl-ctrl-group {
+  background: var(--surface) !important;
+  -webkit-backdrop-filter: var(--material);
+  backdrop-filter: var(--material);
+  border: 0.5px solid var(--line);
+  border-radius: 14px !important;
+  box-shadow: var(--shadow) !important;
+  overflow: hidden;
+}
+
+.mapboxgl-ctrl-group button + button {
+  border-top: 0.5px solid var(--line) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mapboxgl-ctrl-group .mapboxgl-ctrl-icon,
+  .style-ctrl .style-ctrl__btn {
+    filter: invert(1) hue-rotate(180deg);
+  }
+}
+
+.style-menu {
+  border: 0.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  -webkit-backdrop-filter: var(--material);
+  backdrop-filter: var(--material);
+}
+
+.style-ctrl .style-menu__seg button[aria-pressed='true'] {
+  color: #fff;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+.style-ctrl .style-menu__option[aria-pressed='true'] {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+}
+
+/* ---------- Pins: crisper, Apple Maps–like -------------------------------------------- */
+
+.pin {
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+  border-width: 2px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.pin--selected {
+  transform: scale(1.35) translateY(-2px);
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 6px color-mix(in srgb, var(--pin) 45%, transparent),
+    0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- Place card: bottom sheet (iPhone) / left card (desktop) ---------------------- */
+
+.sheet {
+  position: absolute;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-body);
+}
+
+.sheet__head {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 16px 12px 20px;
+}
+
+.sheet__grabber {
+  display: none;
+}
+
+.sheet__titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.place__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.place__eyebrow .dot {
+  --c: inherit;
+}
+
+.place__name {
+  margin: 4px 0 2px;
+  font-family: var(--font-body);
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.place__sub {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.place__sub--hype-2 { color: #c2410c; }
+.place__sub--hype-3 { color: #dc2626; font-weight: 600; }
+
+.sheet__close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  background: var(--fill);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* bigger invisible hit area for the close button */
+.sheet__close::before {
+  content: '';
+  position: absolute;
+  width: 44px;
+  height: 44px;
+}
+
+.sheet__body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 16px calc(20px + env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling: touch;
+}
+
+.place__actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 60px;
+  padding: 8px 4px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: none;
+  background: var(--fill);
+  border: 0;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background-color 0.15s ease;
+}
+
+.action:active {
+  transform: scale(0.96);
+}
+
+.action--primary {
+  color: #fff;
+  background: var(--blue);
+}
+
+.action[aria-pressed='true'] {
+  color: #b45309;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+}
+
+.action[aria-expanded='true'] {
+  background: var(--fill-strong);
+}
+
+.action--disabled {
+  color: var(--ink-soft);
+  opacity: 0.55;
+  cursor: default;
+}
+
+.place__desc {
+  margin: 16px 4px 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.callout {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: #92400e;
+  background: color-mix(in srgb, #f59e0b 14%, transparent);
+  border-radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout { color: #fbbf24; }
+  .action[aria-pressed='true'] { color: #fbbf24; }
+}
+
+/* iOS "inset grouped" list */
+.group {
+  margin-top: 16px;
+  padding: 4px 14px;
+  background: var(--fill);
+  border-radius: 14px;
+}
+
+.group__title {
+  margin: 10px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.group__foot {
+  margin: 8px 0 10px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 12px;
+  padding: 11px 0;
+  font-size: 14.5px;
+}
+
+.row + .row {
+  border-top: 0.5px solid var(--line);
+}
+
+.row__label {
+  color: var(--ink-soft);
+}
+
+.row__value {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.row__sub {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.price__on {
+  color: var(--ink);
+}
+
+.place-hype {
+  border: 0.5px solid transparent;
+}
+
+.place-hype--1 { background: color-mix(in srgb, var(--hype-1) 12%, var(--fill)); }
+.place-hype--2 { background: color-mix(in srgb, var(--hype-2) 12%, var(--fill)); }
+.place-hype--3 { background: color-mix(in srgb, var(--hype-3) 12%, var(--fill)); }
+
+.place-hype__now {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+}
+
+.place-hype__reason {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.place-hype__list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.place-hype__list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  border-top: 0.5px solid var(--line);
+}
+
+.place-hype__list li[aria-current='true'] {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.list-picker {
+  padding-bottom: 12px;
+}
+
+.list-chip {
+  background: var(--paper);
+  border: 0.5px solid var(--line);
+}
+
+.list-chip[aria-pressed='true'] {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+.list-picker__new input {
+  background: var(--paper);
+  border: 0.5px solid var(--line);
+}
+
+.pill-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--blue);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* Desktop: the card takes the left column; the filter panel steps aside while it's open. */
+@media (min-width: 820px) {
+  .sheet {
+    top: var(--gutter);
+    left: var(--gutter);
+    width: 384px;
+    max-height: calc(100% - 2 * var(--gutter));
+    border: 0.5px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    animation: card-in 0.28s var(--ease-out);
+  }
+
+  .app--sheet .panel {
+    opacity: 0;
+    transform: translateX(-12px);
+    pointer-events: none;
+  }
+
+  @keyframes card-in {
+    from {
+      opacity: 0;
+      transform: translateX(-12px);
+    }
+  }
+}
+
+/* iPhone: bottom sheet that peeks at ~58% and pulls up to full. */
+@media (max-width: 819px) {
+  .sheet {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 92dvh;
+    border-radius: 22px 22px 0 0;
+    box-shadow: var(--shadow-sheet);
+    transform: translateY(42%); /* matches PEEK in PlaceSheet.jsx */
+    transition: transform 0.38s var(--ease-sheet);
+    animation: sheet-up 0.38s var(--ease-sheet);
+    touch-action: none;
+  }
+
+  .sheet--full {
+    transform: translateY(0);
+    touch-action: auto;
+  }
+
+  .sheet--full .sheet__body {
+    touch-action: pan-y;
+  }
+
+  @keyframes sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
+  .sheet__head {
+    padding-top: 22px;
+    touch-action: none;
+  }
+
+  .sheet__grabber {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 72px;
+    height: 22px;
+    padding: 0;
+    background: none;
+    border: 0;
+    transform: translateX(-50%);
+    cursor: grab;
+  }
+
+  .sheet__grabber::after {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: 18px;
+    width: 36px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--fill-strong);
+  }
+
+  /* While a place is open, the sheet is the only card on screen (like Apple Maps). */
+  .app--sheet .panel {
+    opacity: 0;
+    transform: translateY(-16px);
+    pointer-events: none;
+  }
+
+  .app--sheet .legend {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .place__name {
+    font-size: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .panel {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Keep the Mapbox logo/attribution visible while a place card is open (required by Mapbox). */
+@media (min-width: 820px) {
+  .sheet {
+    max-height: calc(100% - var(--gutter) - 44px);
+  }
+}
+
+@media (max-width: 819px) {
+  .mapboxgl-ctrl-bottom-left,
+  .mapboxgl-ctrl-bottom-right {
+    transition: bottom 0.38s var(--ease-sheet);
+  }
+
+  .app--sheet .mapboxgl-ctrl-bottom-left,
+  .app--sheet .mapboxgl-ctrl-bottom-right {
+    bottom: calc(92dvh * 0.58);
+  }
+}

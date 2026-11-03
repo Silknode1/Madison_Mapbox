@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import MapGL, { GeolocateControl, Marker, NavigationControl, Popup } from 'react-map-gl';
+import MapGL, { GeolocateControl, Marker, NavigationControl } from 'react-map-gl';
 
 import { CATEGORIES, MAP_CENTER } from './data.js';
 import { DEFAULT_PREVIEW } from './hype.js';
@@ -19,7 +19,7 @@ import Legend from './components/Legend.jsx';
 import ListsDrawer from './components/ListsDrawer.jsx';
 import MapStyleControl from './components/MapStyleControl.jsx';
 import PlaceMarker from './components/PlaceMarker.jsx';
-import PlacePopup from './components/PlacePopup.jsx';
+import PlaceSheet from './components/PlaceSheet.jsx';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 const hasToken = Boolean(MAPBOX_TOKEN) && !MAPBOX_TOKEN.includes('YOUR_');
@@ -130,8 +130,11 @@ function MapApp() {
       center: [place.lng, place.lat],
       zoom: Math.max(map.getZoom(), minZoom),
       duration: 700,
-      // Leave room for the floating panel and the popup that opens above the pin.
-      padding: { top: wide ? 120 : 220, bottom: 24, left: wide ? 380 : 24, right: 24 },
+      // Keep the pin in the visible part of the map: right of the desktop card,
+      // above the phone's peeking sheet.
+      padding: wide
+        ? { top: 60, bottom: 60, left: 420, right: 60 }
+        : { top: 40, bottom: Math.round(window.innerHeight * 0.5), left: 24, right: 24 },
     });
   }, []);
 
@@ -167,6 +170,8 @@ function MapApp() {
     if (listId && !window.matchMedia('(min-width: 820px)').matches) setListsOpen(false);
   }, []);
 
+  const closeSheet = useCallback(() => setSelectedId(null), []);
+
   const toggleCategory = useCallback((key) => {
     setEnabled((prev) => {
       const next = new Set(prev);
@@ -179,7 +184,7 @@ function MapApp() {
   const badge = SYNC_BADGE[syncStatus];
 
   return (
-    <div className="app">
+    <div className={`app${selected ? ' app--sheet' : ''}`}>
       <MapGL
         ref={mapRef}
         mapboxAccessToken={MAPBOX_TOKEN}
@@ -216,32 +221,6 @@ function MapApp() {
           />
         ))}
 
-        {selected && (
-          <Popup
-            longitude={selected.lng}
-            latitude={selected.lat}
-            offset={24}
-            maxWidth="300px"
-            closeOnClick={false}
-            focusAfterOpen={false}
-            onClose={() => setSelectedId(null)}
-          >
-            <PlacePopup
-              key={selected.id}
-              place={selected}
-              category={CATEGORIES[selected.category]}
-              starred={starred.has(selected.id)}
-              onToggleStar={toggleStar}
-              hype={hypeById.get(selected.id) ?? null}
-              hypeWindows={hypeWindowsFor(selected.id)}
-              distance={epicenter ? formatMiles(milesFor(selected)) : null}
-              lists={listsApi.lists}
-              isIn={listsApi.isIn}
-              onToggleList={listsApi.toggle}
-              onCreateList={listsApi.createList}
-            />
-          </Popup>
-        )}
       </MapGL>
 
       <header className="panel">
@@ -313,6 +292,23 @@ function MapApp() {
         }}
         syncStatus={syncStatus}
       />
+
+      {selected && (
+        <PlaceSheet
+          place={selected}
+          category={CATEGORIES[selected.category]}
+          starred={starred.has(selected.id)}
+          onToggleStar={toggleStar}
+          onClose={closeSheet}
+          hype={hypeById.get(selected.id) ?? null}
+          hypeWindows={hypeWindowsFor(selected.id)}
+          distance={epicenter ? formatMiles(milesFor(selected)) : null}
+          lists={listsApi.lists}
+          isIn={listsApi.isIn}
+          onToggleList={listsApi.toggle}
+          onCreateList={listsApi.createList}
+        />
+      )}
 
       <Legend categories={CATEGORIES} />
     </div>
