@@ -1,0 +1,767 @@
+/* ==========================================================================
+   Madison Weekend Map
+   Neutral "ink & paper" chrome so the category colors are the only loud thing on screen.
+   ========================================================================== */
+
+:root {
+  --font-body: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+
+  --paper: #fffcf6;
+  --surface: rgba(255, 252, 246, 0.92);
+  --ink: #17212b;
+  --ink-soft: #5a6570;
+  --line: rgba(23, 33, 43, 0.13);
+  --hover: rgba(23, 33, 43, 0.07);
+  --shadow: 0 10px 30px rgba(15, 23, 32, 0.2);
+
+  --radius: 16px;
+  --panel-w: 360px;
+  --gutter: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1a2430;
+    --surface: rgba(23, 32, 43, 0.92);
+    --ink: #f3ede0;
+    --ink-soft: #a5afb9;
+    --line: rgba(243, 237, 224, 0.15);
+    --hover: rgba(243, 237, 224, 0.09);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+/* ---------- Floating panel (search + filters) ------------------------------ */
+
+.panel {
+  position: absolute;
+  z-index: 5;
+  top: var(--gutter);
+  left: var(--gutter);
+  width: var(--panel-w);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.panel__title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel__title h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.panel__title p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: help;
+}
+
+.badge__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+.badge--synced .badge__dot {
+  background: #22c55e;
+}
+.badge--connecting .badge__dot {
+  background: #f59e0b;
+}
+.badge--error .badge__dot {
+  background: #ef4444;
+}
+
+/* ---------- Search ----------------------------------------------------------- */
+
+.search {
+  position: relative;
+}
+
+.search__input {
+  width: 100%;
+  height: 46px;
+  padding: 0 44px 0 42px;
+  font-size: 16px; /* 16px stops iOS Safari from zooming the page on focus */
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search__input::placeholder {
+  color: var(--ink-soft);
+}
+
+.search__input::-webkit-search-cancel-button,
+.search__input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search__icon {
+  position: absolute;
+  top: 13px;
+  left: 13px;
+  width: 20px;
+  height: 20px;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+.search__clear {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.results {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: min(52dvh, 360px);
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.result[aria-selected='true'] {
+  background: var(--hover);
+}
+
+.result__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.result__name {
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result__meta {
+  font-size: 12px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.results__empty {
+  padding: 14px 10px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+/* ---------- Category chips ---------------------------------------------------- */
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filters__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filters__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-soft);
+}
+
+.link-btn {
+  min-height: 32px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  background: var(--hover);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 16%, var(--paper));
+}
+
+.chip[aria-pressed='false'] {
+  opacity: 0.6;
+}
+
+.chip[aria-pressed='false'] .dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--c);
+}
+
+.chip__count {
+  min-width: 18px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink-soft);
+  background: var(--hover);
+  border-radius: 999px;
+}
+
+/* ---------- Map pins ------------------------------------------------------------ */
+
+.pin {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  background: var(--pin);
+  border: 2.5px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.38);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Invisible hit area so the pin meets the ~44px touch-target guideline. */
+.pin::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+}
+
+.pin:hover {
+  transform: scale(1.12);
+}
+
+.pin--selected {
+  transform: scale(1.3);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--pin) 35%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+.pin--starred::after {
+  content: '★';
+  position: absolute;
+  top: -9px;
+  right: -8px;
+  font-size: 14px;
+  line-height: 1;
+  color: #fbbf24;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.85);
+}
+
+/* ---------- Popups (Mapbox's default popup, restyled) -------------------------- */
+
+.mapboxgl-popup-content {
+  padding: 14px 16px 14px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.mapboxgl-popup-close-button {
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  color: var(--ink-soft);
+  border-radius: 0 14px 0 8px;
+}
+
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
+  border-top-color: var(--paper);
+}
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip {
+  border-bottom-color: var(--paper);
+}
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: var(--paper);
+}
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: var(--paper);
+}
+
+.popup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+  padding-right: 18px;
+}
+
+.popup__cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.popup__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.popup__desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.popup__addr {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.popup__warn {
+  margin: 2px 0 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .popup__warn {
+    color: #fde68a;
+    background: rgba(245, 158, 11, 0.18);
+  }
+}
+
+.popup__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--hover);
+}
+
+.btn--primary {
+  flex: 1;
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.btn--primary:hover {
+  background: var(--ink);
+  opacity: 0.88;
+}
+
+.btn[aria-pressed='true'] {
+  background: color-mix(in srgb, #f59e0b 20%, var(--paper));
+  border-color: #f59e0b;
+}
+
+/* ---------- Legend ---------------------------------------------------------------- */
+
+.legend {
+  position: absolute;
+  z-index: 4;
+  right: var(--gutter);
+  bottom: calc(env(safe-area-inset-bottom) + 34px); /* clear the Mapbox attribution */
+  max-width: calc(100vw - 2 * var(--gutter));
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.legend__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.legend--open {
+  width: 372px;
+}
+
+.legend__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin: 0;
+  padding: 2px 14px 14px;
+  list-style: none;
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.legend__swatch {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  background: var(--c);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.legend__swatch--star {
+  --c: transparent;
+  color: #f59e0b;
+  font-size: 18px;
+  border: 0;
+  box-shadow: none;
+}
+
+.legend__swatch--warn {
+  --c: transparent;
+  color: #d97706;
+  font-size: 16px;
+  border: 0;
+  box-shadow: none;
+}
+
+.legend__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.legend__label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.legend__hint {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+/* ---------- Map controls: keep clear of the notch / home indicator ------------------ */
+
+.mapboxgl-ctrl-top-right {
+  top: calc(env(safe-area-inset-top) + 8px);
+  right: 4px;
+}
+
+.mapboxgl-ctrl-group {
+  border-radius: 12px;
+}
+
+.mapboxgl-ctrl-group button {
+  width: 40px;
+  height: 40px;
+}
+
+/* ---------- Setup screen (no Mapbox token yet) ---------------------------------------- */
+
+.setup {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  padding: 24px;
+}
+
+.setup__card {
+  width: min(480px, 100%);
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.setup__card h1 {
+  margin: 6px 0 14px;
+  font-family: var(--font-display);
+  font-size: 28px;
+}
+
+.setup__card ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.45;
+}
+
+.setup__card code {
+  padding: 1px 6px;
+  font-size: 0.9em;
+  background: var(--hover);
+  border-radius: 6px;
+}
+
+.setup__card a {
+  color: inherit;
+}
+
+/* ---------- Phones: panel becomes a compact top bar, chips scroll sideways ---------------- */
+
+@media (max-width: 819px) {
+  .panel {
+    top: calc(env(safe-area-inset-top) + 8px);
+    left: 8px;
+    right: 8px;
+    width: auto;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .panel__title h1 {
+    font-size: 21px;
+  }
+
+  .chips {
+    flex-wrap: nowrap;
+    margin: 0 -12px;
+    padding: 0 12px 2px;
+    overflow-x: auto;
+    scroll-padding-inline: 12px; /* snap points respect the side padding */
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip {
+    scroll-snap-align: start;
+  }
+
+  .legend {
+    left: 8px;
+    right: auto;
+    max-width: calc(100vw - 72px); /* leave room for the map controls on the right */
+    bottom: calc(env(safe-area-inset-bottom) + 30px);
+  }
+
+  .legend--open {
+    width: 320px;
+  }
+
+  /* The top-right map controls would sit under the panel; park them lower on phones. */
+  .mapboxgl-ctrl-top-right {
+    top: auto;
+    bottom: calc(env(safe-area-inset-bottom) + 96px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pin,
+  .chip {
+    transition: none;
+  }
+}
