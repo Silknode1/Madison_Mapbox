@@ -1,4 +1,13 @@
-/** Popup body: name + short description, plus directions and a star toggle. */
+/** "View listing" for Airbnb links, "Website" for everything else. */
+function linkLabel(url) {
+  try {
+    return new URL(url).hostname.includes('airbnb') ? 'Listing' : 'Website';
+  } catch {
+    return 'Website';
+  }
+}
+
+/** Popup body: name + short description, plus directions, an optional link and a star toggle. */
 export default function PlacePopup({ place, category, starred, onToggleStar }) {
   // Apple Maps link: opens the Maps app on iPhone, maps.apple.com elsewhere. dirflg=w -> walking.
   const directions = `https://maps.apple.com/?daddr=${place.lat},${place.lng}&dirflg=w`;
@@ -24,6 +33,11 @@ export default function PlacePopup({ place, category, starred, onToggleStar }) {
         <a className="btn btn--primary" href={directions} target="_blank" rel="noreferrer">
           Directions
         </a>
+        {place.url && (
+          <a className="btn" href={place.url} target="_blank" rel="noreferrer">
+            {linkLabel(place.url)}
+          </a>
+        )}
         <button
           type="button"
           className="btn"

@@ -1,6 +1,6 @@
 # Madison Weekend Map
 
-An interactive map of Madison, WI for the weekend of **Nov 6–7, 2026**: hotels, Airbnbs, shows, bars, Packers/Vikings watch spots, coffee and food. Built with **React + Vite**, **react-map-gl** and **Mapbox GL JS**, and designed to work well on an iPhone.
+An interactive map of Madison, WI for the weekend of **Nov 6–8, 2026**: hotels, Airbnbs, shows, bars, Packers/Vikings watch spots, coffee and food. Built with **React + Vite**, **react-map-gl** and **Mapbox GL JS**, and designed to work well on an iPhone.
 
 - Color-coded pins (plus a per-category emoji so similar hues stay distinguishable)
 - Category filter chips with **All / None**
@@ -93,7 +93,9 @@ How it works and what to know:
 
 Pin positions were geocoded from street addresses/venue names on 2026-11-02, and event details come from venue and team sites at that time. Things to confirm before you go:
 
-- **Airbnbs**: no addresses were provided, so their pins are placeholders. Set real coordinates in `src/data.js`.
+- **Airbnbs**: Airbnb hides exact addresses until you book, so every Airbnb pin is approximate (neighborhood level). The three original ones are pure placeholders; the three added later link to their listings (`url`) but their dates and prices for Nov 6–8 were not checked. Set real coordinates in `src/data.js` once you know them.
+- **Heritage Tavern**: its operating company filed Chapter 11 in March 2025; reports say it's staying open, so call before you go.
+- **Added places** (hotels, restaurants, bars) come from a hotel directory, Visit Madison, Madtown Life and venue calendars, with OpenStreetMap coordinates. Hours were not checked, so confirm anything you plan around. Book L'Etoile and Ahan early.
 - **Ancora Cafe + Bakery**: map data lists Ancora cafés on Monona Dr and International Ln only, so confirm which one you mean.
 - **High Noon "Unrest Fest"**, **Liquid**, **Sotto**, and the **Majestic Friday show** were not confirmed. They carry a ⚠ in their popups.
 - Shows can be added, moved or cancelled. Re-check the night before.

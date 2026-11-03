@@ -37,6 +37,8 @@ for (const p of PLACES) {
     errors.push(`${where}: (${p.lat}, ${p.lng}) is outside the Madison area — lat/lng swapped?`);
   }
 
+  if (p.url && !/^https:\/\//.test(p.url)) errors.push(`${where}: url must start with https://`);
+
   if (p.coordsApprox) warnings.push(`${where}: pin position is approximate`);
   if (p.warning) warnings.push(`${where}: ${p.warning}`);
 }

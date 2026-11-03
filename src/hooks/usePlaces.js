@@ -14,6 +14,7 @@ function fromRow(row) {
     description: row.description ?? '',
     warning: row.warning ?? undefined,
     coordsApprox: row.coords_approx || undefined,
+    url: row.url ?? undefined,
   };
 }
 

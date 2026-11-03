@@ -16,6 +16,7 @@ create table if not exists public.places (
   description   text not null default '',
   warning       text,
   coords_approx boolean not null default false,
+  url           text check (url is null or url like 'https://%'),
   sort          integer not null default 0,
   updated_at    timestamptz not null default now()
 );

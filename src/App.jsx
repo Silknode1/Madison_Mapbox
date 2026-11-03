@@ -167,7 +167,7 @@ function MapApp() {
           <div>
             <h1>Madison Weekend</h1>
             <p aria-live="polite">
-              Nov 6–7, 2026 · {results.length} of {places.length} places
+              Nov 6–8, 2026 · {results.length} of {places.length} places
             </p>
           </div>
           <span
