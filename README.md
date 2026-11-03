@@ -2,12 +2,13 @@
 
 An interactive map of Madison, WI for the weekend of **Nov 6–8, 2026**: hotels, Airbnbs, shows, bars, Packers/Vikings watch spots, coffee and food. Built with **React + Vite**, **react-map-gl** and **Mapbox GL JS**, and designed to work well on an iPhone.
 
-- Color-coded pins (plus a per-category emoji so similar hues stay distinguishable)
-- Category filter chips with **All / None**
+- **Mapbox Standard** basemap with 3D buildings and real dawn/day/dusk/night lighting (plus Satellite and Minimal) — pick it from the layers button under the zoom controls
+- Color-coded pins (plus a per-category emoji so similar hues stay distinguishable), category chips with **All / None**
+- **Hype meter**: pins glow and pulse where crowds are expected at the chosen time (show times, kickoffs, sell-outs) — schedule-based, not live
 - Live search with a results dropdown (tap a result to fly to it and open its popup)
-- Legend, popups with an Apple Maps "Directions" link, and a ★ star to shortlist places
-- Optional **Supabase** backend: the `places` table, and starred places synced between two phones
-- Light/dark mode that follows the OS (UI and basemap)
+- Popups with **price** ($–$$$$ or ticket prices; nightly rate for stays), **website**, **miles from the epicenter** (the median center of all pins), Apple Maps directions
+- **Lists**: ★ Starred, Fri night, Saturday, Sunday, Maybe, plus your own — synced between two phones with **Supabase**
+- "Outside town" stays 20–30 minutes out, in case downtown fills up for the game
 
 ## Quick start
 
@@ -30,6 +31,7 @@ npm run dev
 ```
 src/
   data.js                  <- ALL the places + categories (edit this)
+  hype.js                  <- when each place is expected to be busy (edit this)
   App.jsx                  state: filters, search, selection; renders the map + panel
   App.css                  styles (tokens at the top; phone layout at the bottom)
   components/
@@ -37,13 +39,20 @@ src/
     CategoryFilters.jsx    chips, All / None, "Starred only"
     Legend.jsx             collapsible legend
     PlaceMarker.jsx        one pin
-    PlacePopup.jsx         popup contents
+    PlacePopup.jsx         popup contents (price, rate, hype meter, list picker)
+    HypeBar.jsx            "Hype at [time]" picker
+    ListsDrawer.jsx        your lists, nearest-first, tap to fly
+    MapStyleControl.jsx    basemap + lighting menu (a real Mapbox control)
   hooks/
     usePlaces.js           data.js first, then Supabase `places` if configured
-    useStarred.js          stars: localStorage, + Supabase sync if configured
+    useLists.js            lists + stars: localStorage, + Supabase sync if configured
+    useMapStyle.js         Standard / Satellite / Minimal + light preset
+    useNow.js              minute clock for the hype meter
     useColorScheme.js      follows the OS light/dark setting
   lib/
     search.js              search + ranking (tune `scoreMatch` to taste)
+    hype.js                hype lookups (`combineHype` decides overlapping windows)
+    geo.js                 epicenter (median center) + miles
     supabase.js            client (null when not configured)
 scripts/
   check-data.mjs           npm run check:data   — validates data.js
@@ -79,14 +88,15 @@ Add an entry to `CATEGORIES` in `src/data.js` (`label`, `color`, `emoji`, `hint`
 
 Without Supabase the app runs entirely from `src/data.js`, and stars are saved on the device. With it, the places come from a table and two phones share their starred places.
 
-1. In your Supabase project, run `supabase/migrations/20261102000000_madison_map.sql` (SQL editor, or `supabase db push`), then `supabase/seed.sql`.
+1. In your Supabase project's **SQL Editor**, paste and run `supabase/setup.sql` (all migrations + the places seed in one file; safe to re-run, and it upgrades an older database). On a Mac: `pbcopy < supabase/setup.sql`.
 2. In `.env.local`, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (Dashboard → Project Settings → API), and a `VITE_TRIP_CODE` of 8+ characters.
 3. Use the **same** trip code in both phones' builds. The badge in the panel shows **Synced** when it works.
 
 How it works and what to know:
 
-- `places` is read-only from the browser. Edit rows in the dashboard, or change `src/data.js` and re-run `npm run seed:sql` + the seed. If the table is empty or unreachable, the app falls back to `src/data.js`.
-- Starred places are stored in `shared_pins`. The app sends the trip code in an `x-trip-code` header, and row-level security only lets a request touch rows with that code. It's a lightweight shared secret for a private two-person app, **not real authentication**. The code ships inside the built JS, so keep the deployed URL private.
+- `src/data.js` is the source of truth for its own places. The `places` table only **adds** rows whose id isn't in data.js (add a spot from the dashboard without redeploying). After editing data.js, `npm run seed:sql` regenerates `seed.sql` and `setup.sql`.
+- Lists live in `shared_pins` (`trip_code, list_id, place_id`; stars are `list_id = 'starred'`) and custom list names in `trip_lists`. On a database from before lists existed, stars still sync and the badge says **Synced ★** until `setup.sql` is re-run.
+- Starred places / list items are stored in `shared_pins`. The app sends the trip code in an `x-trip-code` header, and row-level security only lets a request touch rows with that code. It's a lightweight shared secret for a private two-person app, **not real authentication**. The code ships inside the built JS, so keep the deployed URL private.
 - Sync is a quick poll (every ~8 s while the tab is open, plus on return to the tab), not websockets. That's plenty for two people and works with the header-based security above.
 
 ## Data caveats

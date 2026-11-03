@@ -1,8 +1,9 @@
 import { useState } from 'react';
 
-/** Collapsible legend. Open by default on desktop, collapsed on phones to keep the map clear. */
+/** Collapsible legend (starts collapsed so it never hides a popup). */
 export default function Legend({ categories }) {
-  const [open, setOpen] = useState(() => window.matchMedia('(min-width: 820px)').matches);
+  // Collapsed by default everywhere: with 12 entries it would cover popups on smaller laptops too.
+  const [open, setOpen] = useState(false);
 
   return (
     <aside className={`legend${open ? ' legend--open' : ''}`} aria-label="Map legend">
@@ -35,6 +36,13 @@ export default function Legend({ categories }) {
             <span className="legend__text">
               <span className="legend__label">Starred</span>
               <span className="legend__hint">Your shortlist (synced if set up)</span>
+            </span>
+          </li>
+          <li className="legend__item legend__item--note">
+            <span className="legend__swatch legend__swatch--hype" aria-hidden="true" />
+            <span className="legend__text">
+              <span className="legend__label">Pulsing glow</span>
+              <span className="legend__hint">Expected crowd at the hype time</span>
             </span>
           </li>
           <li className="legend__item legend__item--note">

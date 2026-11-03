@@ -14,7 +14,13 @@
 //   description  one short line shown in the popup
 //   warning      optional — shown with a ⚠ in the popup for anything not confirmed
 //   coordsApprox optional — true when the pin position is a rough guess
-//   url          optional — https link shown as a button in the popup (e.g. an Airbnb listing)
+//   url          optional — https link shown as a button in the popup (hotel site, Airbnb listing)
+//   urlLabel     optional — button text when it isn't the place's own site (e.g. 'Info')
+//   rate         optional — nightly price text for stays; omit when unknown (popup says so)
+//   rateNote     optional — fees / conditions shown under the rate
+//   priceLevel   optional — 1–4 ($ to $$$$) from Google/Yelp/OpenTable/Tripadvisor; for shows, the ticket tier
+//   priceEstimated optional — true when priceLevel was estimated rather than read from a listing
+//   priceText    optional — concrete price hint ("Tickets $22–$125", "Tasting menu $175")
 //
 // Coordinates were geocoded from street addresses / venue names (OpenStreetMap) on 2026-11-02.
 // The three Airbnbs have no address, so their pins are placeholders (coordsApprox).
@@ -24,11 +30,14 @@ export const MAP_CENTER = {
   longitude: -89.3841, // Wisconsin State Capitol
   latitude: 43.0747,
   zoom: 13.6,
+  pitch: 45,
+  bearing: -12,
 };
 
 export const CATEGORIES = {
   hotels: { label: 'Hotels', color: '#3b82f6', emoji: '🛏️', hint: 'Downtown stays' },
   airbnbs: { label: 'Airbnbs', color: '#10b981', emoji: '🏠', hint: 'Near the Capitol' },
+  outside: { label: 'Outside town', color: '#0891b2', emoji: '🚗', hint: 'Stays 20–30 min out' },
   events: { label: 'Events', color: '#ef4444', emoji: '🎟️', hint: 'Shows, markets & more' },
   nightlife: { label: 'Nightlife', color: '#f97316', emoji: '🍸', hint: 'Bars, lounges, clubs' },
   packers: { label: 'Packers bars', color: '#16a34a', emoji: '🧀', hint: 'Packers watch spots' },
@@ -49,6 +58,7 @@ export const PLACES = [
     lat: 43.07561,
     lng: -89.38646,
     address: '1 W Dayton St',
+    url: 'https://www.concoursehotel.com',
     description: 'Downtown hotel a short walk from the Capitol.',
   },
   {
@@ -58,6 +68,7 @@ export const PLACES = [
     lat: 43.07142,
     lng: -89.3943,
     address: '525 W Johnson St',
+    url: 'https://www.hilton.com/en/hotels/msndtdt-doubletree-madison-downtown/',
     description: 'Downtown hotel near campus and the Kohl Center.',
   },
   {
@@ -67,7 +78,8 @@ export const PLACES = [
     lat: 43.08129,
     lng: -89.37376,
     address: '823 E Washington Ave',
-    description: 'Hotel in Capitol East, close to The Sylvee and High Noon Saloon.',
+    url: 'https://www.marriott.com/en-us/hotels/msnox-moxy-madison-downtown/overview/',
+    description: 'Hotel in Capitol East, close to The Sylvee and High Noon Saloon. Sat 4–6 pm: Q106 Avery Anna pre-show on its Ático rooftop.',
   },
   {
     id: 'hampton-inn-downtown',
@@ -76,6 +88,8 @@ export const PLACES = [
     lat: 43.07273,
     lng: -89.39347,
     address: '440 W Johnson St',
+    url: 'https://www.hilton.com/en/hotels/msnbjhx-hampton-suites-madison-downtown/',
+    rateNote: 'Self-parking is $25/day (hilton.com).',
     description: 'Hotel near campus, a short walk to State St.',
   },
   {
@@ -85,6 +99,7 @@ export const PLACES = [
     lat: 43.07386,
     lng: -89.38038,
     address: '231 S Pinckney St',
+    url: 'https://www.hilton.com/en/hotels/msnbces-embassy-suites-madison-downtown/',
     description: 'All-suite hotel a couple of blocks off the Capitol Square.',
   },
 
@@ -126,12 +141,16 @@ export const PLACES = [
   // ---- Events (Nov 6–7) ------------------------------------------------------
   {
     id: 'sylvee',
-    name: 'The Sylvee — Wage War / Avery Anna',
+    name: 'The Sylvee — Wage War / Avery Anna / Cheap Trick',
     category: 'events',
     lat: 43.0808,
     lng: -89.37467,
     address: '25 S Livingston St',
-    description: 'Fri Nov 6: Wage War · Sat Nov 7: Avery Anna · Sun Nov 8: Cheap Trick, 8 pm (doors 6:30).',
+    description: 'Fri: Wage War (show 7) · Sat: Avery Anna — SOLD OUT · Sun: Cheap Trick, 8 pm (doors 6:30).',
+    url: 'https://thesylvee.com/calendar/',
+    priceLevel: 3,
+    priceEstimated: true,
+    priceText: 'Cheap Trick ~$63 incl. fees (Ticketmaster) · Avery Anna sold out',
   },
   {
     id: 'overture',
@@ -141,6 +160,9 @@ export const PLACES = [
     lng: -89.38828,
     address: '201 State St',
     description: 'Madison Symphony Tchaikovsky program · Fri & Sat 7:30 pm, Sun matinee 2:30 pm.',
+    url: 'https://www.overture.org/tickets-events/2026-27-season/mso-laura-jackson-conducts-tchaikovsky/',
+    priceLevel: 2,
+    priceText: 'Symphony tickets $22–$125',
   },
   {
     id: 'barrymore',
@@ -150,6 +172,10 @@ export const PLACES = [
     lng: -89.35227,
     address: '2090 Atwood Ave',
     description: 'Fri Nov 6: Better Than Ezra, 8 pm · Sat Nov 7: Sabrina cast reunion, 7 pm.',
+    url: 'https://barrymorelive.com/event/better-than-ezra/',
+    priceLevel: 2,
+    priceEstimated: true,
+    priceText: 'Reserved seating; price not published online',
   },
   {
     id: 'high-noon',
@@ -158,8 +184,11 @@ export const PLACES = [
     lat: 43.07972,
     lng: -89.3763,
     address: '701 E Washington Ave',
-    description: 'Live-music club in Capitol East.',
-    warning: '“Unrest Fest” was not confirmed on the venue’s calendar — check before going.',
+    description: 'Fri: Six Foot Blonde, 8 pm · Sat: Unrest Fest 2026 (doors 6, show 7).',
+    url: 'https://high-noon.com/event/unrest-fest-2026/',
+    priceLevel: 2,
+    priceEstimated: true,
+    priceText: 'Unrest Fest from ~$32 (resale); ACLU-WI benefit',
   },
   {
     id: 'majestic',
@@ -168,8 +197,10 @@ export const PLACES = [
     lat: 43.07442,
     lng: -89.3809,
     address: '115 King St',
-    description: 'Live music and comedy · Sat Nov 7: Phoebe Robinson, 8 pm.',
-    warning: 'Friday’s show was not confirmed — check the venue’s calendar.',
+    description: 'Fri: West 22nd w/ The 4411 — SOLD OUT · Sat: Phoebe Robinson, 8 pm (tickets available).',
+    url: 'https://majesticmadison.com/event/phoebe-robinson/',
+    priceLevel: 2,
+    priceText: 'Phoebe Robinson ~$39 incl. fees · Friday sold out',
   },
 
   // ---- Nightlife ---------------------------------------------------------------
@@ -181,16 +212,22 @@ export const PLACES = [
     lng: -89.38715,
     address: '116 W Mifflin St',
     description: 'Piano bar near the Capitol Square.',
+    url: 'https://ivoryroompianobar.net/',
+    priceLevel: 2,
+    priceText: 'Dueling pianos — Fri doors 7, show 9',
   },
   {
     id: 'liquid',
     name: 'Liquid',
     category: 'nightlife',
-    lat: 43.07344,
-    lng: -89.39692,
-    address: null,
-    description: 'Nightlife spot on University Ave, near campus.',
-    warning: 'Not verified as open — check hours before going.',
+    lat: 43.07329,
+    lng: -89.39682,
+    address: '624 University Ave',
+    description: 'Nightclub near campus (18+ to enter, 21+ to drink).',
+    warning: 'Status uncertain: its site lists no events since July. Check before going.',
+    url: 'https://liquidmadison.com/',
+    priceLevel: 2,
+    priceEstimated: true,
   },
   {
     id: 'sotto',
@@ -199,8 +236,12 @@ export const PLACES = [
     lat: 43.0751,
     lng: -89.39008,
     address: '303 N Henry St',
-    description: 'Spot on N Henry St, just off lower State St.',
-    warning: 'Not verified — check hours and what it is before going.',
+    description: 'Latin dance club just off lower State St; open Wed–Sat.',
+    warning: 'Its online event list looks stale (Sept 2025) — check before going.',
+    url: 'https://www.sottonightclub.com/',
+    priceLevel: 2,
+    priceEstimated: true,
+    priceText: 'Latin dance club; Sat DJ, doors 10 pm',
   },
   {
     id: 'kollege-klub',
@@ -210,6 +251,9 @@ export const PLACES = [
     lng: -89.39716,
     address: '529 N Lake St',
     description: 'Campus-area bar on Lake St.',
+    url: 'https://thekollegeklub.com/',
+    priceLevel: 1,
+    priceEstimated: true,
   },
   {
     id: 'gennas',
@@ -219,6 +263,9 @@ export const PLACES = [
     lng: -89.38442,
     address: '105 W Main St',
     description: 'Cocktail lounge just south of the Capitol Square.',
+    url: 'https://www.gennaslounge.com/',
+    priceLevel: 2,
+    priceText: 'Happy hour 4:30–6:30 pm',
   },
   {
     id: 'oz-by-oz',
@@ -228,6 +275,10 @@ export const PLACES = [
     lng: -89.38107,
     address: '113 King St',
     description: 'On King St, right next to the Majestic.',
+    url: 'https://www.ozbyozmadison.com/',
+    priceLevel: 3,
+    priceEstimated: true,
+    priceText: 'Craft-cocktail “snackeasy”, from 6 pm',
   },
 
   // ---- Packers bars ------------------------------------------------------------
@@ -239,6 +290,9 @@ export const PLACES = [
     lng: -89.35456,
     address: '2013 Winnebago St',
     description: `East-side sports bar. ${PACKERS_NOTE}`,
+    url: 'https://www.facebook.com/playerssportsbar/',
+    urlLabel: 'Facebook',
+    priceLevel: 1,
   },
   {
     id: 'wilsons',
@@ -248,6 +302,10 @@ export const PLACES = [
     lng: -89.35045,
     address: '2144 Atwood Ave',
     description: `Atwood Ave sports bar, next to the Barrymore. ${PACKERS_NOTE}`,
+    url: 'https://www.wilsonssportsbarandgrill.com/',
+    priceLevel: 1,
+    priceEstimated: true,
+    priceText: 'Opens 8 am Sunday',
   },
   {
     id: 'ljs',
@@ -257,6 +315,9 @@ export const PLACES = [
     lng: -89.37368,
     address: '8 N Paterson St',
     description: `Sports tavern near Capitol East. ${PACKERS_NOTE}`,
+    url: 'https://www.facebook.com/p/LJs-Sports-Tavern-Grill-100063531972084/',
+    urlLabel: 'Facebook',
+    priceLevel: 2,
   },
   {
     id: 'baked-wings',
@@ -266,6 +327,8 @@ export const PLACES = [
     lng: -89.38994,
     address: '250 State St',
     description: `Wings on lower State St. ${PACKERS_NOTE}`,
+    url: 'https://www.bakedwingsandthings.com/',
+    priceLevel: 2,
   },
   {
     id: 'jordans',
@@ -275,6 +338,10 @@ export const PLACES = [
     lng: -89.40789,
     address: '1330 Regent St',
     description: 'Big Ten pub near Camp Randall — expect crowds before Saturday’s 3:15 pm kickoff.',
+    url: 'https://big10pub.com/',
+    priceLevel: 2,
+    priceEstimated: true,
+    priceText: 'Huge beer garden, 1,500+ on game days',
   },
 
   // ---- Vikings -----------------------------------------------------------------
@@ -286,6 +353,8 @@ export const PLACES = [
     lng: -89.39561,
     address: '223 N Frances St',
     description: 'Campus-area bar near State St — the Vikings spot on this map.',
+    url: 'https://www.thegritty.com/',
+    priceLevel: 2,
   },
 
   // ---- Sports ------------------------------------------------------------------
@@ -297,6 +366,9 @@ export const PLACES = [
     lng: -89.41265,
     address: '1440 Monroe St',
     description: 'Sat Nov 7, 3:15 pm kickoff. Expect heavy crowds around campus and Regent St.',
+    url: 'https://uwbadgers.com/game-center/17149',
+    priceLevel: 2,
+    priceText: 'Resale from ~$25 incl. fees',
   },
   {
     id: 'kohl-center',
@@ -306,6 +378,9 @@ export const PLACES = [
     lng: -89.39688,
     address: '601 W Dayton St',
     description: 'Fri Nov 6 · Badgers vs Delaware, 6:30 pm.',
+    url: 'https://uwbadgers.com/game-center/17311',
+    priceLevel: 1,
+    priceText: 'From $19 (official — “almost gone”); resale ~$8–10',
   },
 
   // ---- Coffee ------------------------------------------------------------------
@@ -317,6 +392,10 @@ export const PLACES = [
     lng: -89.38391,
     address: '27 W Main St',
     description: 'Specialty coffee on the Capitol Square.',
+    url: 'https://wonderstate.com/pages/madison-cafe',
+    priceLevel: 1,
+    priceEstimated: true,
+    priceText: 'Open 7 am–1 pm',
   },
   {
     id: 'colectivo-state',
@@ -326,6 +405,8 @@ export const PLACES = [
     lng: -89.39559,
     address: '583 State St',
     description: 'Wisconsin coffee chain at the campus end of State St.',
+    url: 'https://colectivo.com/pages/state-street',
+    priceLevel: 1,
   },
   {
     id: 'bradburys',
@@ -335,18 +416,22 @@ export const PLACES = [
     lng: -89.38396,
     address: '127 N Hamilton St',
     description: 'Coffee shop just north of the Capitol Square.',
+    url: 'https://www.bradburyscoffee.com/',
+    priceLevel: 1,
+    priceEstimated: true,
+    priceText: 'Coffee and crêpes',
   },
   {
     id: 'ancora',
     name: 'Ancora Cafe + Bakery',
     category: 'coffee',
-    lat: 43.08291,
-    lng: -89.32442,
-    address: '3926 Monona Dr',
-    description: 'Ancora café on the east side.',
-    warning:
-      'Location unconfirmed — map data lists Ancora cafés on Monona Dr and International Ln, none downtown.',
-    coordsApprox: true,
+    lat: 43.07452,
+    lng: -89.38122,
+    address: '107 King St',
+    description: 'Ancora’s downtown café and bakery, a block off the Square.',
+    url: 'https://www.ancoracafes.com/locations',
+    priceLevel: 1,
+    priceEstimated: true,
   },
   {
     id: 'michelangelos',
@@ -356,6 +441,10 @@ export const PLACES = [
     lng: -89.38722,
     address: '114 State St',
     description: 'Coffee on lower State St.',
+    url: 'http://www.michelangeloscoffeehouse.com/',
+    priceLevel: 1,
+    priceEstimated: true,
+    priceText: 'Open 8 am–8 pm',
   },
 
   // ---- Food --------------------------------------------------------------------
@@ -367,6 +456,9 @@ export const PLACES = [
     lng: -89.38357,
     address: '23 N Pinckney St',
     description: 'Wisconsin tavern on the Square: cheese curds, brats and Old Fashioneds.',
+    url: 'https://theoldfashioned.com/',
+    priceLevel: 2,
+    priceText: 'Sandwiches and burgers ~$11–13',
   },
   {
     id: 'great-dane',
@@ -376,6 +468,8 @@ export const PLACES = [
     lng: -89.38008,
     address: '123 E Doty St',
     description: 'Downtown brewpub.',
+    url: 'https://www.greatdanepub.com/locations/downtown-madison/',
+    priceLevel: 2,
   },
 
   // ==========================================================================
@@ -392,6 +486,7 @@ export const PLACES = [
     lat: 43.07298,
     lng: -89.38483,
     address: '22 S Carroll St',
+    url: 'https://www.parkhotelmadison.com/',
     description: 'On the Square: about 0.1 mile from Capitol Square.',
   },
   {
@@ -400,7 +495,8 @@ export const PLACES = [
     category: 'hotels',
     lat: 43.07203,
     lng: -89.3881,
-    address: '330 W Washington Ave',
+    address: '333 W Washington Ave',
+    url: 'https://www.hyatt.com/hyatt-place/en-US/msnzd-hyatt-place-madison-downtown',
     description: 'A couple of blocks from Overture and Capitol Square.',
   },
   {
@@ -410,6 +506,9 @@ export const PLACES = [
     lat: 43.07262,
     lng: -89.38107,
     address: '9 E Wilson St',
+    url: 'https://www.hilton.com/en/hotels/msnmhhf-hilton-madison-monona-terrace/',
+    rate: 'Advertised from $137',
+    rateNote: 'Hilton Honors, non-refundable, “select dates” — not confirmed for Nov 6–7.',
     description: 'Next to Monona Terrace, home of the Winter Art Fair (Sat–Sun).',
   },
   {
@@ -419,6 +518,7 @@ export const PLACES = [
     lat: 43.07658,
     lng: -89.38237,
     address: '1 N Webster St',
+    url: 'https://www.marriott.com/en-us/hotels/msnac-ac-hotel-madison-downtown/overview/',
     description: 'Downtown stay with the Eno Vino rooftop (Capitol views) on top.',
   },
   {
@@ -428,6 +528,7 @@ export const PLACES = [
     lat: 43.07932,
     lng: -89.39002,
     address: '1001 Wisconsin Pl',
+    url: 'https://www.theedgewater.com/',
     description: 'Lakefront hotel with a spa and restaurants, about 0.5 mile from the Square.',
   },
   {
@@ -437,6 +538,8 @@ export const PLACES = [
     lat: 43.0755,
     lng: -89.39567,
     address: '601 Langdon St',
+    url: 'https://www.hilton.com/en/hotels/msngmgu-graduate-madison/',
+    rateNote: 'Plus a ~$15–17/night destination fee (per OTA listings).',
     description: 'Campus-side hotel on Langdon St, about 0.6 mile from the Square.',
   },
   {
@@ -446,6 +549,7 @@ export const PLACES = [
     lat: 43.08229,
     lng: -89.37312,
     address: '901 E Washington Ave',
+    url: 'https://www.ihg.com/hotelindigo/hotels/us/en/madison/msnms/hoteldetail',
     description: 'Capitol East stay, about 0.9 mile from the Square and near The Sylvee.',
   },
   {
@@ -455,6 +559,7 @@ export const PLACES = [
     lat: 43.06869,
     lng: -89.39846,
     address: '770 Regent St',
+    url: 'https://www.hilton.com/en/hotels/msnmugi-hilton-garden-inn-madison-downtown/',
     description: 'By Camp Randall and the Kohl Center — busy before Saturday’s 3:15 pm kickoff.',
   },
 
@@ -509,6 +614,9 @@ export const PLACES = [
     lng: -89.38874,
     address: '216 State St',
     description: 'Sat Nov 7: Dave Attell, 8 pm (doors 7).',
+    url: 'https://madisonorpheum.com/event/dave-attell/',
+    priceLevel: 2,
+    priceText: 'Tickets ~$41 incl. fees; resale from ~$59',
   },
   {
     id: 'farmers-market',
@@ -519,6 +627,9 @@ export const PLACES = [
     address: 'Capitol Square',
     description:
       'Sat Nov 7, 6:15 am–1:45 pm on the Square (season runs through Nov 14). The State St corner closes to cars 8 am–3 pm.',
+    url: 'https://dcfm.org/markets/saturday-on-the-square',
+    priceLevel: 1,
+    priceText: 'Free',
   },
   {
     id: 'winter-art-fair',
@@ -528,6 +639,9 @@ export const PLACES = [
     lng: -89.38015,
     address: '1 John Nolen Dr (Monona Terrace)',
     description: 'Sat 9–5 and Sun 10–4 · 135+ Wisconsin artists · $5 admission.',
+    url: 'https://www.artcraftwis.org/winter-art-fair-off-the-square',
+    priceLevel: 1,
+    priceText: '$5 admission',
   },
   {
     id: 'olbrich',
@@ -537,6 +651,9 @@ export const PLACES = [
     lng: -89.33673,
     address: '3330 Atwood Ave',
     description: 'Tropical conservatory, open daily 10 am–4 pm. A drive or rideshare from downtown.',
+    url: 'https://www.olbrich.org/visit',
+    priceLevel: 1,
+    priceText: 'Conservatory $6 adults; outdoor gardens free',
   },
 
   // ---- More nightlife -------------------------------------------------------------
@@ -548,6 +665,8 @@ export const PLACES = [
     lng: -89.38149,
     address: '121 S Pinckney St',
     description: 'Restaurant and bar just off the Square that turns into a club later, often with a DJ.',
+    url: 'https://www.merchantmadison.com/',
+    priceLevel: 2,
   },
   {
     id: 'gibs',
@@ -557,6 +676,9 @@ export const PLACES = [
     lng: -89.36133,
     address: '1380 Williamson St',
     description: 'Cocktails in a renovated Victorian villa; Grandpa’s pizza and wine are next door.',
+    url: 'https://www.gibs.bar/',
+    priceLevel: 2,
+    priceText: 'Open till 2 am Fri–Sat',
   },
   {
     id: 'robin-room',
@@ -566,6 +688,8 @@ export const PLACES = [
     lng: -89.37708,
     address: '821 E Johnson St',
     description: 'Craft cocktail bar in Capitol East.',
+    url: 'http://www.robinroombar.com/',
+    priceLevel: 2,
   },
   {
     id: 'settle-down',
@@ -575,6 +699,8 @@ export const PLACES = [
     lng: -89.38121,
     address: '117 S Pinckney St',
     description: 'Cocktail tavern a block off the Square.',
+    url: 'https://www.settledownmadison.com/',
+    priceLevel: 2,
   },
   {
     id: 'luckys-1313',
@@ -584,6 +710,9 @@ export const PLACES = [
     lng: -89.40766,
     address: '1313 Regent St',
     description: 'Regent St game-day bar: expect crowds before Saturday’s 3:15 pm kickoff.',
+    url: 'https://luckys1313.com/',
+    priceLevel: 2,
+    priceEstimated: true,
   },
   {
     id: 'sconniebar',
@@ -593,6 +722,9 @@ export const PLACES = [
     lng: -89.40989,
     address: '1421 Regent St',
     description: 'Regent St game-day bar near Camp Randall.',
+    url: 'https://sconniebar.com/',
+    priceLevel: 1,
+    priceEstimated: true,
   },
 
   // ---- More coffee ----------------------------------------------------------------
@@ -604,6 +736,9 @@ export const PLACES = [
     lng: -89.37615,
     address: '908 E Johnson St',
     description: 'Neighborhood coffee spot in Capitol East.',
+    url: 'https://www.jph4ever.com/',
+    priceLevel: 1,
+    priceEstimated: true,
   },
   {
     id: 'colectivo-willy',
@@ -613,6 +748,9 @@ export const PLACES = [
     lng: -89.3706,
     address: '836 Williamson St',
     description: 'Roaster café on Willy St, good before a stroll or dinner nearby.',
+    url: 'https://colectivo.com/pages/willy-st',
+    priceLevel: 1,
+    priceEstimated: true,
   },
 
   // ---- More food (date-night picks) -----------------------------------------------
@@ -624,6 +762,9 @@ export const PLACES = [
     lng: -89.38232,
     address: '1 S Pinckney St',
     description: 'Farm-to-table, multi-course dining with a sommelier and Capitol views. Book ahead.',
+    url: 'https://www.letoile-restaurant.com/',
+    priceLevel: 4,
+    priceText: 'Six-course tasting menu $175/guest; pairings extra',
   },
   {
     id: 'graze',
@@ -633,6 +774,9 @@ export const PLACES = [
     lng: -89.38218,
     address: '1 S Pinckney St',
     description: 'Glass-house dining room with sweeping Capitol views; cheese curds and bibimbap.',
+    url: 'https://www.grazemadison.com/',
+    priceLevel: 3,
+    priceText: 'About $31–50 per person (OpenTable)',
   },
   {
     id: 'ahan',
@@ -642,6 +786,8 @@ export const PLACES = [
     lng: -89.37206,
     address: '744 Williamson St',
     description: 'Lao cooking and cocktails on Willy St; the sticky rice with mango is a favorite.',
+    url: 'https://www.ahanmadison608.com/',
+    priceLevel: 2,
   },
   {
     id: 'sardine',
@@ -651,6 +797,8 @@ export const PLACES = [
     lng: -89.37452,
     address: '617 Williamson St',
     description: 'Bistro and bar with dinner and weekend brunch, and a lakeside view.',
+    url: 'http://sardinemadison.com/',
+    priceLevel: 3,
   },
   {
     id: 'mint-mark',
@@ -660,6 +808,8 @@ export const PLACES = [
     lng: -89.36049,
     address: '1874 E Washington Ave',
     description: 'Shareable plates built on Wisconsin ingredients in a botanic-styled room.',
+    url: 'https://www.mintmarkmadison.com/',
+    priceLevel: 3,
   },
   {
     id: 'heritage-tavern',
@@ -671,6 +821,9 @@ export const PLACES = [
     description: 'Cozy farm-to-table dining, with pork from the chef’s own pigs.',
     warning:
       'The operating company filed Chapter 11 in March 2025; reports say the tavern is staying open. Call to confirm.',
+    url: 'https://heritagetavern.com/',
+    priceLevel: 3,
+    priceText: 'About $31–50 per person (OpenTable)',
   },
   {
     id: 'lucille',
@@ -680,6 +833,9 @@ export const PLACES = [
     lng: -89.3815,
     address: '101 King St',
     description: 'Restaurant and bar on King St, around the corner from the Majestic.',
+    url: 'https://www.lucillemadison.com/',
+    priceLevel: 3,
+    priceText: 'Pizza and cocktails; about $31–50 per person',
   },
   {
     id: 'harvey-house',
@@ -689,6 +845,9 @@ export const PLACES = [
     lng: -89.39506,
     address: '644 W Washington Ave',
     description: 'Modern supper club in a renovated historic train depot, with a glowing bar.',
+    url: 'https://www.theharveyhouse.com/',
+    priceLevel: 3,
+    priceEstimated: true,
   },
   {
     id: 'turn-key',
@@ -698,6 +857,9 @@ export const PLACES = [
     lng: -89.36486,
     address: '1344 E Washington Ave',
     description: 'Supper club with Friday fish fry and $7 Old Fashioneds, per Madison Magazine.',
+    url: 'https://www.turnkeymadison.com/',
+    priceLevel: 3,
+    priceEstimated: true,
   },
   {
     id: 'fairchild',
@@ -707,6 +869,9 @@ export const PLACES = [
     lng: -89.42814,
     address: '2611 Monroe St',
     description: 'Wisconsin-inspired, locally sourced dishes on Monroe St. Drive or rideshare.',
+    url: 'https://www.fairchildrestaurant.com/',
+    priceLevel: 3,
+    priceText: 'Dinner from 4 pm, Wed–Sat',
   },
   {
     id: 'cadre',
@@ -716,6 +881,9 @@ export const PLACES = [
     lng: -89.42976,
     address: '2540 University Ave',
     description: 'French bistro west of campus. Drive or rideshare.',
+    url: 'https://www.cadrerestaurant.com/',
+    priceLevel: 2,
+    priceText: 'Open Tue–Sat 4–8:30 pm — closed Sunday',
   },
   {
     id: 'tobys',
@@ -725,5 +893,105 @@ export const PLACES = [
     lng: -89.3028,
     address: '3717 S Dutch Mill Rd',
     description: 'Classic Wisconsin supper club, open since 1937. Drive or rideshare.',
+    url: 'https://www.tobyssupperclub.com/',
+    priceLevel: 2,
+    priceText: 'Dinners include soup or salad and potato',
+  },
+
+  // ==========================================================================
+  // Round 3 (Nov 3): fallback stays in case downtown fills up for the game.
+  // Drive times are Mapbox driving estimates to the Capitol, without traffic.
+  // ==========================================================================
+  {
+    id: 'mansion-hill-inn',
+    name: 'Mansion Hill Inn',
+    category: 'hotels',
+    lat: 43.0787,
+    lng: -89.38758,
+    address: '424 N Pinckney St',
+    description: 'Small boutique hotel in Mansion Hill with a bar, breakfast and valet. 4 min from the Capitol.',
+    url: 'https://mansionhillinn.com/',
+  },
+  {
+    id: 'seven-acre',
+    name: 'The Inn at Seven Acre',
+    category: 'outside',
+    lat: 42.92976,
+    lng: -89.5236,
+    address: '6858 Paoli Rd, Paoli',
+    description:
+      '10-room boutique inn in a converted dairy, with its own restaurant. Madison Magazine’s Best Boutique Hotel 2024. ~28 min drive.',
+    url: 'https://sevenacredairyco.com/stay/',
+    priceLevel: 3,
+    priceEstimated: true,
+  },
+  {
+    id: 'cameo-rose',
+    name: 'Cameo Rose Victorian Country Inn',
+    category: 'outside',
+    lat: 42.90833,
+    lng: -89.50342,
+    address: '1090 Severson Rd, Belleville',
+    description: 'Victorian country B&B with whirlpool rooms and suites. ~30 min drive.',
+    warning: 'Pin is on Severson Rd, not the exact spot, and November availability wasn’t confirmed — call first.',
+    coordsApprox: true,
+    url: 'https://www.cameorose.com/',
+  },
+  {
+    id: 'marriott-west',
+    name: 'Madison Marriott West',
+    category: 'outside',
+    lat: 43.08764,
+    lng: -89.52264,
+    address: '1313 John Q Hammons Dr, Middleton',
+    description: 'Full-service hotel in Middleton. ~24 min drive.',
+    url: 'https://www.marriott.com/en-us/hotels/msnwe-madison-marriott-west/overview/',
+  },
+  {
+    id: 'hgi-middleton',
+    name: 'Hilton Garden Inn Madison West/Middleton',
+    category: 'outside',
+    lat: 43.09281,
+    lng: -89.5255,
+    address: '1801 Deming Way, Middleton',
+    description: 'Rated 8.7/10 on Trip.com. ~24 min drive.',
+    url: 'https://www.hilton.com/en/hotels/msnwhgi-hilton-garden-inn-madison-west-middleton/',
+    priceLevel: 2,
+    priceEstimated: true,
+  },
+  {
+    id: 'courtyard-middleton',
+    name: 'Courtyard Madison West/Middleton',
+    category: 'outside',
+    lat: 43.10013,
+    lng: -89.51967,
+    address: '2266 Deming Way, Middleton',
+    description: 'Rated 8.9/10 on Trip.com. ~26 min drive.',
+    url: 'https://www.marriott.com/en-us/hotels/msncw-courtyard-madison-west-middleton/overview/',
+    priceLevel: 2,
+    priceEstimated: true,
+  },
+  {
+    id: 'hyatt-verona',
+    name: 'Hyatt Place Madison/Verona',
+    category: 'outside',
+    lat: 42.9747,
+    lng: -89.50756,
+    address: '846 Liberty Dr, Verona',
+    description: 'Southwest of the city. ~25 min drive.',
+    url: 'https://www.hyatt.com/hyatt-place/en-US/msnzv-hyatt-place-madison-verona',
+    priceLevel: 2,
+    priceEstimated: true,
+    priceText: 'Free breakfast',
+  },
+  {
+    id: 'wyndham-fitchburg',
+    name: 'Wyndham Garden Madison Fitchburg',
+    category: 'outside',
+    lat: 43.01704,
+    lng: -89.42419,
+    address: '2969 Cahill Main, Fitchburg',
+    description: 'Closest of the out-of-town options. ~19 min drive.',
+    url: 'https://www.wyndhamhotels.com/wyndham-garden/fitchburg-wisconsin/wyndham-garden-fitchburg-madison/overview',
   },
 ];

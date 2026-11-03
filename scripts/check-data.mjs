@@ -1,8 +1,10 @@
 // Sanity-check src/data.js before you ship:  npm run check:data
 import { CATEGORIES, PLACES } from '../src/data.js';
+import { HYPE_WINDOWS } from '../src/hype.js';
 
 // Rough bounding box around Madison, WI — catches swapped lat/lng and typos.
-const BOUNDS = { minLat: 42.95, maxLat: 43.2, minLng: -89.6, maxLng: -89.2 };
+// Wide enough for the 20–30 min "Outside town" stays; matches the database's lat/lng checks.
+const BOUNDS = { minLat: 42.9, maxLat: 43.3, minLng: -89.7, maxLng: -89.1 };
 
 const errors = [];
 const warnings = [];
@@ -37,10 +39,21 @@ for (const p of PLACES) {
     errors.push(`${where}: (${p.lat}, ${p.lng}) is outside the Madison area — lat/lng swapped?`);
   }
 
-  if (p.url && !/^https:\/\//.test(p.url)) errors.push(`${where}: url must start with https://`);
+  if (p.url && !/^https?:\/\//.test(p.url)) errors.push(`${where}: url must start with http(s)://`);
+  if (p.priceLevel != null && ![1, 2, 3, 4].includes(p.priceLevel)) errors.push(`${where}: priceLevel must be 1–4`);
 
   if (p.coordsApprox) warnings.push(`${where}: pin position is approximate`);
   if (p.warning) warnings.push(`${where}: ${p.warning}`);
+}
+
+// Hype windows must point at real places and have a sane time range.
+const ids = new Set(PLACES.map((p) => p.id));
+for (const w of HYPE_WINDOWS) {
+  const s = Date.parse(`${w.start}:00-06:00`);
+  const e = Date.parse(`${w.end}:00-06:00`);
+  if (!ids.has(w.placeId)) errors.push(`hype: unknown place "${w.placeId}"`);
+  if (!(e > s)) errors.push(`hype: ${w.placeId} ${w.start}–${w.end} ends before it starts`);
+  if (![1, 2, 3].includes(w.level)) errors.push(`hype: ${w.placeId} level must be 1–3`);
 }
 
 console.log(`${PLACES.length} places in ${Object.keys(CATEGORIES).length} categories`);

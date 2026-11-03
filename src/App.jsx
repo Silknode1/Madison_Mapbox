@@ -1,30 +1,37 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import MapGL, { GeolocateControl, NavigationControl, Popup } from 'react-map-gl';
+import MapGL, { GeolocateControl, Marker, NavigationControl, Popup } from 'react-map-gl';
 
 import { CATEGORIES, MAP_CENTER } from './data.js';
+import { DEFAULT_PREVIEW } from './hype.js';
 import { searchPlaces } from './lib/search.js';
+import { hypeAt, hypeWindowsFor, isDuringWeekend, madisonMs } from './lib/hype.js';
+import { epicenterOf, formatMiles, milesBetween } from './lib/geo.js';
 import { usePlaces } from './hooks/usePlaces.js';
-import { useStarred } from './hooks/useStarred.js';
+import { useLists } from './hooks/useLists.js';
 import { useColorScheme } from './hooks/useColorScheme.js';
+import { useNow } from './hooks/useNow.js';
+import { lightForTime, useMapStyle } from './hooks/useMapStyle.js';
 
 import SearchBar from './components/SearchBar.jsx';
 import CategoryFilters from './components/CategoryFilters.jsx';
+import HypeBar from './components/HypeBar.jsx';
 import Legend from './components/Legend.jsx';
+import ListsDrawer from './components/ListsDrawer.jsx';
+import MapStyleControl from './components/MapStyleControl.jsx';
 import PlaceMarker from './components/PlaceMarker.jsx';
 import PlacePopup from './components/PlacePopup.jsx';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 const hasToken = Boolean(MAPBOX_TOKEN) && !MAPBOX_TOKEN.includes('YOUR_');
 
-const MAP_STYLES = {
-  light: 'mapbox://styles/mapbox/light-v11',
-  dark: 'mapbox://styles/mapbox/dark-v11',
-};
-
 const ALL_CATEGORIES = Object.keys(CATEGORIES);
 
 const SYNC_BADGE = {
-  synced: { label: 'Synced', tip: 'Starred places are shared between your phones.' },
+  synced: { label: 'Synced', tip: 'Stars and lists are shared between your phones.' },
+  partial: {
+    label: 'Synced ★',
+    tip: 'Stars sync; other lists stay on this device until supabase/setup.sql is re-run.',
+  },
   connecting: { label: 'Syncing…', tip: 'Connecting to Supabase…' },
   error: { label: 'Sync error', tip: 'Could not reach Supabase — stars are saved on this device.' },
   local: {
@@ -40,14 +47,47 @@ export default function App() {
 
 function MapApp() {
   const { places, source } = usePlaces();
-  const { starred, toggleStar, status: syncStatus } = useStarred();
+  const listsApi = useLists();
+  const { starred, toggleStar, status: syncStatus } = listsApi;
   const scheme = useColorScheme();
+  const mapStyle = useMapStyle(scheme);
   const mapRef = useRef(null);
+  const now = useNow();
 
   const [enabled, setEnabled] = useState(() => new Set(ALL_CATEGORIES));
   const [query, setQuery] = useState('');
   const [starredOnly, setStarredOnly] = useState(false);
+  const [hotOnly, setHotOnly] = useState(false);
+  const [activeListId, setActiveListId] = useState(null); // list filter
+  const [listsOpen, setListsOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+
+  // Hype clock: live during the weekend; before it, open on a preview so the glow is visible.
+  const [hypeTime, setHypeTime] = useState(() => (isDuringWeekend(Date.now()) ? 'now' : DEFAULT_PREVIEW));
+  const clockMs = hypeTime === 'now' ? now : madisonMs(hypeTime);
+  const lightPreset = mapStyle.light === 'auto' ? lightForTime(clockMs) : mapStyle.light;
+
+  // placeId -> the hype window in effect at the clock time (only busy places are in the map).
+  const hypeById = useMemo(() => {
+    const result = new Map();
+    for (const place of places) {
+      const hype = hypeAt(place.id, clockMs);
+      if (hype) result.set(place.id, hype);
+    }
+    return result;
+  }, [places, clockMs]);
+
+  // The "epicenter": median center of every pin. Distances are straight-line miles from it.
+  const epicenter = useMemo(() => epicenterOf(places), [places]);
+  const milesFor = useCallback((place) => (epicenter ? milesBetween(epicenter, place) : 0), [epicenter]);
+  const placesById = useMemo(() => new Map(places.map((p) => [p.id, p])), [places]);
+
+  const activeList = listsApi.lists.find((l) => l.id === activeListId) ?? null;
+  const activeListIds = activeList ? listsApi.byList.get(activeList.id) : null;
+  const listItemCount = useMemo(
+    () => [...listsApi.byList.entries()].reduce((n, [id, set]) => (id === 'starred' ? n : n + set.size), 0),
+    [listsApi.byList],
+  );
 
   // How many places per category (for the chip badges).
   const counts = useMemo(() => {
@@ -56,14 +96,18 @@ function MapApp() {
     return result;
   }, [places]);
 
-  // 1) category + "starred only" filters  ->  2) search on top of that.
+  // 1) category + "starred only" + "busy only" filters  ->  2) search on top of that.
   // The markers and the dropdown both use `results`, so they always agree.
   const allowed = useMemo(
     () =>
       places.filter(
-        (p) => enabled.has(p.category) && (!starredOnly || starred.has(p.id)),
+        (p) =>
+          enabled.has(p.category) &&
+          (!starredOnly || starred.has(p.id)) &&
+          (!activeListIds || activeListIds.has(p.id)) &&
+          (!hotOnly || hypeById.has(p.id)),
       ),
-    [places, enabled, starredOnly, starred],
+    [places, enabled, starredOnly, starred, activeListIds, hotOnly, hypeById],
   );
   const results = useMemo(() => searchPlaces(allowed, query, CATEGORIES), [allowed, query]);
 
@@ -107,6 +151,22 @@ function MapApp() {
     [flyToPlace],
   );
 
+  const pickFromList = useCallback(
+    (place) => {
+      setEnabled((prev) => (prev.has(place.category) ? prev : new Set([...prev, place.category])));
+      setSelectedId(place.id);
+      flyToPlace(place, 15);
+      if (!window.matchMedia('(min-width: 820px)').matches) setListsOpen(false);
+    },
+    [flyToPlace],
+  );
+
+  const showList = useCallback((listId) => {
+    setActiveListId(listId);
+    setStarredOnly(false);
+    if (listId && !window.matchMedia('(min-width: 820px)').matches) setListsOpen(false);
+  }, []);
+
   const toggleCategory = useCallback((key) => {
     setEnabled((prev) => {
       const next = new Set(prev);
@@ -124,12 +184,25 @@ function MapApp() {
         ref={mapRef}
         mapboxAccessToken={MAPBOX_TOKEN}
         initialViewState={MAP_CENTER}
-        mapStyle={MAP_STYLES[scheme]}
+        mapStyle={mapStyle.url}
         style={{ width: '100%', height: '100%' }}
         onClick={() => setSelectedId(null)}
       >
-        <NavigationControl position="top-right" showCompass={false} />
+        <NavigationControl position="top-right" visualizePitch />
         <GeolocateControl position="top-right" />
+        <MapStyleControl
+          styleKey={mapStyle.styleKey}
+          onStyle={mapStyle.setStyleKey}
+          light={mapStyle.light}
+          onLight={mapStyle.setLight}
+          preset={lightPreset}
+        />
+
+        {epicenter && (
+          <Marker longitude={epicenter.lng} latitude={epicenter.lat} anchor="center" style={{ zIndex: 0 }}>
+            <span className="epicenter" title="Epicenter — the middle of all the pins" aria-hidden="true" />
+          </Marker>
+        )}
 
         {results.map((place) => (
           <PlaceMarker
@@ -138,6 +211,7 @@ function MapApp() {
             category={CATEGORIES[place.category]}
             selected={place.id === selectedId}
             starred={starred.has(place.id)}
+            hype={hypeById.get(place.id)?.level ?? 0}
             onSelect={selectFromMap}
           />
         ))}
@@ -153,10 +227,18 @@ function MapApp() {
             onClose={() => setSelectedId(null)}
           >
             <PlacePopup
+              key={selected.id}
               place={selected}
               category={CATEGORIES[selected.category]}
               starred={starred.has(selected.id)}
               onToggleStar={toggleStar}
+              hype={hypeById.get(selected.id) ?? null}
+              hypeWindows={hypeWindowsFor(selected.id)}
+              distance={epicenter ? formatMiles(milesFor(selected)) : null}
+              lists={listsApi.lists}
+              isIn={listsApi.isIn}
+              onToggleList={listsApi.toggle}
+              onCreateList={listsApi.createList}
             />
           </Popup>
         )}
@@ -188,6 +270,8 @@ function MapApp() {
           onPick={selectFromSearch}
         />
 
+        <HypeBar value={hypeTime} onChange={setHypeTime} busyCount={hypeById.size} />
+
         <CategoryFilters
           categories={CATEGORIES}
           counts={counts}
@@ -198,8 +282,37 @@ function MapApp() {
           starredOnly={starredOnly}
           starredCount={starred.size}
           onToggleStarredOnly={() => setStarredOnly((v) => !v)}
+          hotOnly={hotOnly}
+          hotCount={hypeById.size}
+          onToggleHotOnly={() => setHotOnly((v) => !v)}
+          activeList={activeList}
+          activeListCount={activeListIds?.size ?? 0}
+          onClearList={() => setActiveListId(null)}
+          onOpenLists={() => setListsOpen(true)}
+          listItemCount={listItemCount}
         />
       </header>
+
+      <ListsDrawer
+        open={listsOpen}
+        onClose={() => setListsOpen(false)}
+        lists={listsApi.lists}
+        byList={listsApi.byList}
+        placesById={placesById}
+        categories={CATEGORIES}
+        milesFor={milesFor}
+        hypeById={hypeById}
+        activeList={activeListId}
+        onShowList={showList}
+        onPick={pickFromList}
+        onRemove={listsApi.toggle}
+        onCreate={listsApi.createList}
+        onDelete={(id) => {
+          if (id === activeListId) setActiveListId(null);
+          listsApi.deleteList(id);
+        }}
+        syncStatus={syncStatus}
+      />
 
       <Legend categories={CATEGORIES} />
     </div>

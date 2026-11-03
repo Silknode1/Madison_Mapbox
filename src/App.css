@@ -765,3 +765,722 @@ button {
     transition: none;
   }
 }
+
+/* =====================================================================================
+   Nov 3: hype glow · map style control · price / distance / lists · epicenter
+   ===================================================================================== */
+
+:root {
+  --hype-1: #fbbf24; /* busier than usual — warm amber */
+  --hype-2: #ff7a1a; /* busy — ember */
+  --hype-3: #ff3b30; /* near capacity — hot red */
+  --accent-lists: #6366f1;
+}
+
+/* ---------- Hype meter: picker row ---------------------------------------------------- */
+
+.hype-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.hype-bar__label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hype-bar__select {
+  min-height: 36px;
+  padding: 6px 30px 6px 12px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--paper)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.6'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.hype-bar__count {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* ---------- Hype glow on pins: a static halo + an expanding "ping" ring ---------------- */
+/* Only transform/opacity animate, so twenty pulsing pins stay smooth on a phone. */
+
+.pin__glow {
+  --hype: var(--hype-2);
+  --speed: 1.8s;
+  --reach: 2.3;
+  position: absolute;
+  inset: -3px;
+  z-index: -1; /* behind the pin itself */
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 12px 4px color-mix(in srgb, var(--hype) 55%, transparent);
+}
+
+.pin__glow::before,
+.pin__glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--hype);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--hype) 35%, transparent) 0%, transparent 70%);
+  animation: hype-ping var(--speed) cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.pin__glow::before {
+  display: none;
+  animation-delay: calc(var(--speed) / 2);
+}
+
+.pin--hype-1 .pin__glow {
+  --hype: var(--hype-1);
+  --speed: 2.6s;
+  --reach: 1.8;
+  box-shadow: 0 0 8px 2px color-mix(in srgb, var(--hype) 45%, transparent);
+}
+
+.pin--hype-3 .pin__glow {
+  --hype: var(--hype-3);
+  --speed: 1.15s;
+  --reach: 2.8;
+  box-shadow: 0 0 18px 7px color-mix(in srgb, var(--hype) 60%, transparent);
+}
+
+.pin--hype-3 .pin__glow::before {
+  display: block; /* second ring = visibly "hotter" */
+}
+
+@keyframes hype-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  80%,
+  100% {
+    transform: scale(var(--reach));
+    opacity: 0;
+  }
+}
+
+/* ---------- Epicenter marker -------------------------------------------------------------- */
+
+.epicenter {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border: 2px dashed color-mix(in srgb, var(--ink) 70%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--ink) 0 3px, transparent 4px);
+  opacity: 0.75;
+  pointer-events: auto;
+}
+
+/* ---------- Chips: busy / lists ---------------------------------------------------------- */
+
+.chip--lists[aria-pressed='false'] .dot,
+.chip--hot[aria-pressed='false'] .dot {
+  opacity: 1;
+}
+
+/* ---------- Legend: glow swatch ---------------------------------------------------------- */
+
+.legend__swatch--hype {
+  --c: var(--hype-2);
+  position: relative;
+  box-shadow: 0 0 10px 3px color-mix(in srgb, var(--hype-2) 55%, transparent);
+}
+
+.legend__swatch--hype::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--hype-2);
+  border-radius: 50%;
+  --reach: 1.9;
+  animation: hype-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* ---------- Map style control ----------------------------------------------------------- */
+
+.style-ctrl {
+  position: relative;
+}
+
+.style-ctrl .style-ctrl__btn {
+  display: grid;
+  place-items: center;
+  color: #17212b;
+}
+
+.style-menu {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 10px);
+  z-index: 6;
+  width: 240px;
+  padding: 12px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.style-menu .eyebrow {
+  margin: 2px 0 8px;
+}
+
+.style-menu .eyebrow + * {
+  margin-bottom: 12px;
+}
+
+.style-menu__options {
+  display: grid;
+  gap: 6px;
+}
+
+.style-ctrl .style-menu button {
+  width: auto;
+  height: auto;
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.style-ctrl .style-menu button + button {
+  border-top: 1px solid var(--line);
+}
+
+.style-ctrl .style-menu__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  background: none;
+}
+
+.style-ctrl .style-menu__option[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--hover);
+}
+
+.style-menu__thumb {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.style-menu__thumb--standard {
+  background:
+    linear-gradient(135deg, transparent 45%, #c7d2de 45% 55%, transparent 55%),
+    linear-gradient(160deg, #e8edf2 0 40%, #b9c7d6 40% 60%, #dfe6ec 60%);
+}
+
+.style-menu__thumb--satellite {
+  background:
+    radial-gradient(circle at 30% 30%, #6b8f5a 0 18%, transparent 19%),
+    radial-gradient(circle at 70% 65%, #2f5d7c 0 28%, transparent 29%),
+    linear-gradient(135deg, #4d6b3c, #7a8a5c 50%, #3e5a6e);
+}
+
+.style-menu__thumb--minimal {
+  background: linear-gradient(135deg, #f4f2ee 0 50%, #26303a 50%);
+}
+
+.style-menu__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.style-menu__label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.style-menu__hint {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.style-menu__seg {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.style-ctrl .style-menu__seg button {
+  min-height: 34px;
+  padding: 0 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: none;
+}
+
+.style-ctrl .style-menu__seg button[aria-pressed='true'] {
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.style-ctrl .style-menu__seg button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.style-menu__note {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+/* ---------- Popup: price, distance, rate, hype, lists ------------------------------------- */
+
+.popup__actions {
+  flex-wrap: wrap;
+}
+
+.popup__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: -2px 0 6px;
+  font-size: 13px;
+}
+
+.price {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.price__on {
+  color: #15803d;
+}
+
+.price__off {
+  color: color-mix(in srgb, var(--ink-soft) 45%, transparent);
+}
+
+.popup__price-text {
+  color: var(--ink-soft);
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  vertical-align: 1px;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.popup__dist {
+  white-space: nowrap;
+}
+
+.popup__rate {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  margin: 8px 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--hover);
+  border-radius: 10px;
+}
+
+.popup__rate-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  align-self: center;
+}
+
+.popup__rate-value {
+  font-weight: 600;
+}
+
+.popup__rate-note {
+  grid-column: 2;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.popup__hype {
+  margin: 8px 0;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.popup__hype--1 { border-color: color-mix(in srgb, var(--hype-1) 70%, transparent); }
+.popup__hype--2 { border-color: color-mix(in srgb, var(--hype-2) 70%, transparent); }
+.popup__hype--3 {
+  border-color: var(--hype-3);
+  background: color-mix(in srgb, var(--hype-3) 8%, transparent);
+}
+
+.popup__hype-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.popup__hype-reason {
+  flex-basis: 100%;
+  color: var(--ink-soft);
+}
+
+.meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.meter span {
+  width: 5px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.meter span:nth-child(1) { height: 6px; }
+.meter span:nth-child(2) { height: 10px; }
+.meter span:nth-child(3) { height: 14px; }
+.meter--1 span:nth-child(-n + 1) { background: var(--hype-1); }
+.meter--2 span:nth-child(-n + 2) { background: var(--hype-2); }
+.meter--3 span:nth-child(-n + 3) { background: var(--hype-3); }
+
+.popup__hype-list {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-soft);
+}
+
+.popup__hype-list li[aria-current='true'] {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.popup__hype-when {
+  white-space: nowrap;
+}
+
+.popup__hype-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.list-picker {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.list-picker__lists {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.list-chip {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.list-chip[aria-pressed='true'] {
+  color: #fff;
+  background: var(--accent-lists);
+  border-color: var(--accent-lists);
+}
+
+.list-picker__new {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.list-picker__new input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+/* ---------- Lists drawer (side sheet on desktop, bottom sheet on phones) ------------------ */
+
+.drawer {
+  position: absolute;
+  z-index: 8;
+  top: var(--gutter);
+  right: var(--gutter);
+  bottom: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  max-width: calc(100vw - 2 * var(--gutter));
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  animation: drawer-in 0.22s ease-out;
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+.drawer__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 8px;
+}
+
+.drawer__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+
+.drawer__sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.drawer__close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  background: var(--hover);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.drawer__new {
+  margin: 0 16px 8px;
+}
+
+.drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dlist {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.dlist__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dlist__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 15px;
+}
+
+.dlist__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.link-btn[aria-pressed='true'] {
+  font-weight: 700;
+  color: var(--accent-lists);
+}
+
+.link-btn--danger {
+  color: #b91c1c;
+}
+
+.dlist__empty {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.dlist__items {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dlist__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dlist__pick {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px 6px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.dlist__pick:hover {
+  background: var(--hover);
+}
+
+.dlist__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dlist__place {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dlist__meta {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.dlist__hype--2 { color: #c2410c; }
+.dlist__hype--3 { color: #dc2626; font-weight: 600; }
+
+.dlist__remove {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+@media (max-width: 819px) {
+  .hype-bar__select {
+    font-size: 16px; /* stops iOS zooming in on focus */
+  }
+
+  .style-menu {
+    top: auto;
+    bottom: 0;
+  }
+
+  .drawer {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-width: none;
+    max-height: 72dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-radius: 20px 20px 0 0;
+    animation-name: sheet-in;
+  }
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+  }
+
+  .list-picker__new input {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pin__glow::before,
+  .pin__glow::after,
+  .legend__swatch--hype::after {
+    animation: none;
+    opacity: 0.6;
+    transform: scale(1.35);
+  }
+
+  .drawer {
+    animation: none;
+  }
+}
+
+/* Keep pins (which carry their own z-index for the glow / selection) inside the map's own
+   stacking context, so they can never paint over the panel, legend or lists sheet. */
+.mapboxgl-map {
+  isolation: isolate;
+}
+
+.style-ctrl .style-menu__option {
+  text-align: left;
+}
