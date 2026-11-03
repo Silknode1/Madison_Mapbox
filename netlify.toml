@@ -1,0 +1,7 @@
+# Netlify: build the Vite app and serve dist/. Env vars (VITE_*) are set in the Netlify project.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
